@@ -1,7 +1,4 @@
-import os
 import logging
-from openai import OpenAI, Client, embeddings
-from dotenv import load_dotenv
 
 
 # Configure logging
