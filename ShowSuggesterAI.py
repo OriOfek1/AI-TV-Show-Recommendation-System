@@ -1,18 +1,36 @@
 import logging
-
+import csv
+from fuzzywuzzy import process, fuzz
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
+csv_filename = "imdb_tvshows - imdb_tvshows.csv"
+
                     
 def get_user_input():
     # Get user input for TV shows
     return input("Which TV shows did you love watching? Separate them by a comma. Make sure to enter more than 1 show: ")
 
 def interpret_shows_names(user_input):
-    # TODO: Implement fuzzy string matching for TV show interpretation
-    interpreted_shows = [show.strip().title() for show in user_input.split(',')]
-    logging.debug("TV show interpretation is pending implementation of fuzzy.\n")
-    return interpreted_shows
+    
+    input_show_list_raw = user_input.split(',')
+
+    # Read the CSV file and get the shows names list
+    with open(csv_filename, 'r', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        list_of_show_names = [row['Title'] for row in reader]
+
+    most_similar_shows_names = []
+
+    # Find the closest match for each input part
+    for requested_show_name in input_show_list_raw:
+        
+        # Get the most similar show name and its score and add it to the most similar shows list
+        top_match, score = process.extractOne(requested_show_name, list_of_show_names)
+        most_similar_shows_names.append(top_match)
+
+    return most_similar_shows_names
+
 
 def confirm_user_input(shows):
     # Confirm user input with the user
