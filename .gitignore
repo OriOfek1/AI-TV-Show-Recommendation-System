@@ -1,3 +1,2 @@
-# Ignore .env files
+*.pkl
 .env
-.pkl
