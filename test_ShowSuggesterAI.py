@@ -1,9 +1,11 @@
 import pytest
 import ShowSuggesterAI
 
-def test_interpret_shows_names():
-    assert ShowSuggesterAI.interpret_shows_names("the office, friends") == ["The Office", "Friends"]
-
+def test_interpret_input_shows_names():
+    assert ShowSuggesterAI.interpret_input_shows_names("the office, frng") == ["The Office", "Fringe"]
+    assert ShowSuggesterAI.interpret_input_shows_names("Game of Thrones") == ["Game of Thrones"]
+    assert ShowSuggesterAI.interpret_input_shows_names("gem of thrones, lupin, breaking") == ["Game of Thrones", "Lupin", "Breaking Bad"]
+    assert ShowSuggesterAI.interpret_input_shows_names("xyz, abc, 123") == []
 # def test_confirm_user_input():
 #     pass
 

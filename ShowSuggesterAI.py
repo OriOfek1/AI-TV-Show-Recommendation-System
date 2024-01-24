@@ -1,6 +1,8 @@
 import logging
 import csv
-from fuzzywuzzy import process, fuzz
+from fuzzywuzzy import process
+import numpy as np
+
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -11,8 +13,9 @@ def get_user_input():
     # Get user input for TV shows
     return input("Which TV shows did you love watching? Separate them by a comma. Make sure to enter more than 1 show: ")
 
-def interpret_shows_names(user_input):
-    
+def interpret_input_shows_names(user_input):
+    # using fuzzywuzzy to interpret the user input
+
     input_show_list_raw = user_input.split(',')
 
     # Read the CSV file and get the shows names list
@@ -27,7 +30,8 @@ def interpret_shows_names(user_input):
         
         # Get the most similar show name and its score and add it to the most similar shows list
         top_match, score = process.extractOne(requested_show_name, list_of_show_names)
-        most_similar_shows_names.append(top_match)
+        if score >= 65:
+            most_similar_shows_names.append(top_match)
 
     return most_similar_shows_names
 
@@ -84,7 +88,7 @@ def main():
     # Main function to run the TV show recommendation program
     while True:
         user_input = get_user_input()
-        interpreted_shows = interpret_shows_names(user_input)
+        interpreted_shows = interpret_input_shows_names(user_input)
 
         if confirm_user_input(interpreted_shows):
             # Generate recommendations and custom shows
