@@ -1,17 +1,21 @@
+import os
 import logging
+from openai import OpenAI, Client, embeddings
+from dotenv import load_dotenv
+
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
                     
+def get_user_input():
+    # Get user input for TV shows
+    return input("Which TV shows did you love watching? Separate them by a comma. Make sure to enter more than 1 show: ")
+
 def interpret_shows_names(user_input):
     # TODO: Implement fuzzy string matching for TV show interpretation
     interpreted_shows = [show.strip().title() for show in user_input.split(',')]
     logging.debug("TV show interpretation is pending implementation of fuzzy.\n")
     return interpreted_shows
-
-def get_user_input():
-    # Get user input for TV shows
-    return input("Which TV shows did you love watching? Separate them by a comma. Make sure to enter more than 1 show: ")
 
 def confirm_user_input(shows):
     # Confirm user input with the user
