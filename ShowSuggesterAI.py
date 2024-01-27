@@ -4,13 +4,17 @@ import csv
 from fuzzywuzzy import process
 import numpy as np
 from numpy.linalg import norm
-
-
+from dotenv import load_dotenv
+import os
+from openai import OpenAI
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 csv_filename = "imdb_tvshows - imdb_tvshows.csv"
 
+load_dotenv()
+api_key = os.environ.get("OPENAI_API_KEY")
+client = OpenAI(api_key=api_key)
                     
 def get_user_input():
     # Get user input for TV shows
@@ -48,22 +52,26 @@ def cosine_similarity(vec_a, vec_b):
     return np.dot(vec_a, vec_b) / (norm(vec_a) * norm(vec_b))
 
 def generate_real_tv_show_recommendations(user_input_show_list):
-    #add boost for similar actors, genres, etc
+    #TODO:add boost for similar actors, genres, etc
 
 
     with open("tv_show_descriptions_embeddings.pkl", 'rb') as file:
         all_show_embeddings = pickle.load(file)
-
+    
+    # Get the embeddings for the user input shows
     user_input_show_embeddings = {show: all_show_embeddings[show] for show in user_input_show_list if show in all_show_embeddings}
 
+    # Calculate the average vector for the user input shows
     user_input_vectors = list(user_input_show_embeddings.values())
     average_vector = np.mean(user_input_vectors, axis=0)
     logging.debug(f"Average Vector for User Input Shows: {average_vector}\n")
 
+    # Calculate the similarity scores for all shows except the user input shows
     similarity_scores = {show: cosine_similarity(average_vector, show_embedding) for show, show_embedding in all_show_embeddings.items()}
     for user_picked_show in user_input_show_list:
         similarity_scores.pop(user_picked_show, None)
 
+    # Sort the shows by similarity score
     recommended_shows = sorted(similarity_scores.items(), key=lambda x: x[1], reverse=True)[:5]
     logging.debug(f"Recommended Shows: {recommended_shows}\n")
     print("Top 5 Recommended Shows:\n")
@@ -72,29 +80,37 @@ def generate_real_tv_show_recommendations(user_input_show_list):
     
     return recommended_shows
     
-def generate_made_up_show_input_based(input_shows):
-        # TODO: Generate a made-up show based on the input shows
-        logging.debug("Generating a made-up show based on input shows is pending implementation.\n")
-        show1_name = "Show1_name"
-        show1_description = "Show1_description"
-        return show1_name, show1_description
+def generate_made_up_show(show_list):
+        promt = f"""You're a professional Netflix show creator. My favorite shows are: {show_list}.
+                Create a show I would love to watch. Please use an actor from the list of my favorite shows and explain the role and name you gave them.
+                They don't have to be the main character, so you can mention them by the way in the description.
+                In your answer, do not mention the shows I provided. Use this format:
+                Name: Name of the show
+                Description: Short description of the show (100 words max)"""
+        messages = [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content":f"{promt}"}
+    ]
+        response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=messages
+    )
+        generated_show = response.choices[0].message.content
+        show_name = generated_show.split("Name: ")[1].split("Description: ")[0]
+        show_description = generated_show.split("Description: ")[1]
+        
+        return show_name, show_description
 
-def generate_made_up_show_based_on_recommendations(recommended_shows):
-    # TODO: Generate a made-up show based on the recommended shows
-    logging.debug("Generating a made-up show based on recommended shows is pending implementation.\n")
-    show2_name = "Show2_name"
-    show2_description = "Show2_description"
-    return show2_name, show2_description
 
 def generate_ad_for_a_shows(show_name, show_description):
     #TODO: Generate an ad for a show using dale-e
     logging.debug("Generating an ad image for a show is pending implementation.\n")
     pass
 
-def generate_made_up_shows(input_shows, recommended_real_tv_shows):
+def generate_made_up_shows_and_ads(input_shows, recommended_real_tv_shows):
     
-    show1_name, show1_description = generate_made_up_show_input_based(input_shows)
-    show2_name, show2_description = generate_made_up_show_based_on_recommendations(recommended_real_tv_shows)
+    show1_name, show1_description = generate_made_up_show(input_shows)
+    show2_name, show2_description = generate_made_up_show(recommended_real_tv_shows)
 
     print(
         f"I have also created just for you two shows which I think you would love.\n"
@@ -121,7 +137,7 @@ def main():
             # Generate recommendations and custom shows
             recommendations = generate_real_tv_show_recommendations(interpreted_shows)
 
-            custom_shows = generate_made_up_shows(interpreted_shows, recommendations)
+            custom_shows = generate_made_up_shows_and_ads(interpreted_shows, recommendations)
             break
         else:
             print("Sorry about that. Let's try again. Please make sure to write the names of the TV shows correctly.")
