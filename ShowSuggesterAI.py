@@ -9,7 +9,7 @@ import os
 from openai import OpenAI
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 csv_filename = "imdb_tvshows - imdb_tvshows.csv"
 
 load_dotenv()
@@ -39,13 +39,13 @@ def interpret_input_shows_names(user_input):
         top_match, score = process.extractOne(requested_show_name, list_of_show_names)
         if score >= 65:
             most_similar_shows_names.append(top_match)
-
+    
     return most_similar_shows_names
 
 
 def confirm_user_input(shows):
     # Confirm user input with the user
-    confirmation = input(f"Just to make sure, do you mean {', '.join(shows)}? (y/n): ")
+    confirmation = input(f"Just to make sure, do you mean {', '.join(shows)}? (y/n): \n")
     return confirmation.lower() == 'y'
 
 def cosine_similarity(vec_a, vec_b):
@@ -74,7 +74,7 @@ def generate_real_tv_show_recommendations(user_input_show_list):
     # Sort the shows by similarity score
     recommended_shows = sorted(similarity_scores.items(), key=lambda x: x[1], reverse=True)[:5]
     logging.debug(f"Recommended Shows: {recommended_shows}\n")
-    print("Top 5 Recommended Shows:\n")
+    print("\nAwesome! I have found shows you might be intrested in.\nTop 5 Recommended Shows for you:\n")
     for show, score in recommended_shows:
         print(f"{show}: {score * 100:.0f}%")
     
@@ -99,30 +99,47 @@ def generate_made_up_show(show_list):
         show_name = generated_show.split("Name: ")[1].split("Description: ")[0]
         show_description = generated_show.split("Description: ")[1]
         
-        return show_name, show_description
+        return show_name.strip(), show_description.strip()
 
 
 def generate_ad_for_a_shows(show_name, show_description):
-    #TODO: Generate an ad for a show using dale-e
-    logging.debug("Generating an ad image for a show is pending implementation.\n")
-    pass
+    prompt = f"""
+                You are a creative Movie poster designer. You have to create a poster for a new TV show called {show_name}.
+                The show is about {show_description}.you can display the name of the show on the poster but do not add any additional text."""
+    response = client.images.generate(
+        model="dall-e-3",
+        prompt=prompt,
+        size="1024x1024",
+        quality="standard",
+        n=1,
+    )
+    ad_url = response.data[0].url # Get the image URL
+    print(f"To view an Ad for the show {show_name}, click \033]8;;{ad_url}\033\\Here\033]8;;\033\\")
+
 
 def generate_made_up_shows_and_ads(input_shows, recommended_real_tv_shows):
     
     show1_name, show1_description = generate_made_up_show(input_shows)
     show2_name, show2_description = generate_made_up_show(recommended_real_tv_shows)
-
+    print("I have also created just for you two shows which I think you would love.")
+    print("\n" + "~" * 20 + " Show 1 " + "~" * 20+ "\n")
     print(
-        f"I have also created just for you two shows which I think you would love.\n"
         f"Show #1 is based on the fact that you loved the input shows that you gave me.\n"
-        f"Its name is {show1_name} and it is about {show1_description}.\n"
+        f"Its name is {show1_name}\n"
+        f"{show1_description}.\n"
+    )
+    generate_ad_for_a_shows(show1_name, show1_description)
+
+    print("\n"+"~" * 20 + " Show 2 " + "~" * 20 + "\n")
+    print(
         f"Show #2 is based on the shows that I recommended for you.\n"
-        f"Its name is {show2_name} and it is about {show2_description}.\n"
-        f"Here are also the 2 TV show ads. Hope you like them!"
+        f"Its name is {show2_name}.\n"
+        f"{show2_description}.\n"
     )
 
-    generate_ad_for_a_shows(show1_name, show1_description)
     generate_ad_for_a_shows(show2_name, show2_description)
+
+    print("\nHope you like them!\n")
     return {show1_name: show1_description, show2_name: show2_description}
 
 
@@ -130,17 +147,19 @@ def main():
     # Main function to run the TV show recommendation program
     while True:
         user_input = get_user_input()
-        # Interprets user input into shows from the list
-        interpreted_shows = interpret_input_shows_names(user_input)
-
-        if confirm_user_input(interpreted_shows):
-            # Generate recommendations and custom shows
-            recommendations = generate_real_tv_show_recommendations(interpreted_shows)
-
-            custom_shows = generate_made_up_shows_and_ads(interpreted_shows, recommendations)
-            break
+        # Check if the input is not empty
+        if user_input:
+            # Interprets user input into shows from the list
+            interpreted_shows = interpret_input_shows_names(user_input)
+            if interpreted_shows and confirm_user_input(interpreted_shows):
+                # Generate recommendations and custom shows
+                recommendations = generate_real_tv_show_recommendations(interpreted_shows)
+                custom_shows = generate_made_up_shows_and_ads(interpreted_shows, recommendations)
+                break
+            else:
+                print("Sorry about that. Let's try again. Please make sure to write the names of the TV shows correctly.\n")
         else:
-            print("Sorry about that. Let's try again. Please make sure to write the names of the TV shows correctly.")
+            print("Please enter at least one TV show.\n")
 
 if __name__ == "__main__":
     main()
