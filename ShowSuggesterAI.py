@@ -58,7 +58,7 @@ def get_list_of_items_for_shows(list_of_shows, column_name):
         reader = csv.DictReader(file)
         items_for_shows = [row[column_name].split(',') for row in reader if row['Title'] in list_of_shows]
 
-    # Flatten the list of lists and convert to a set to remove duplicates, then back to list
+    # set of items (no duplicates)
     return list(set(item.strip() for sublist in items_for_shows for item in sublist))
 
 
@@ -145,8 +145,9 @@ def generate_made_up_show(show_list):
 
 def generate_ad_for_a_shows(show_name, show_description):
     prompt = f"""
-                You are a creative Movie poster designer. You have to create a poster for a new TV show called {show_name}.
-                The show is about {show_description}.you can display the name of the show on the poster but do not add any additional text."""
+                You are a creative Movie poster designer. You have to create a poster for a new TV show called {show_name}. 
+                The show is about {show_description}.you can display the name of the show on the poster but do not 
+                add any additional text. """
     response = client.images.generate(
         model="dall-e-3",
         prompt=prompt,
@@ -154,7 +155,7 @@ def generate_ad_for_a_shows(show_name, show_description):
         quality="standard",
         n=1,
     )
-    ad_url = response.data[0].url  # Get the image URL
+    ad_url = response.data[0].url
     print(f"To view an Ad for the show {show_name}, click Here: {ad_url}")
 
 
@@ -198,7 +199,8 @@ def main():
                 break
             else:
                 print(
-                    "Sorry about that. Let's try again. Please make sure to write the names of the TV shows correctly.\n")
+                    "Sorry about that. Let's try again. Please make sure to write the names of the TV shows "
+                    "correctly.\n")
         else:
             print("Please enter at least one TV show.\n")
 
