@@ -17,19 +17,6 @@ def generate_embedding(description):
     )
     return response.data[0].embedding
 
-# Function to process the CSV file and generate embeddings
-def generate_embeddings_dict_from_csv_file(csv_filename):
-    embeddings_dict = {}
-
-    with open(csv_filename, 'r', encoding='utf-8') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            title = row['Title']
-            description = row['Description']
-            embedding = generate_embedding(description)
-            embeddings_dict[title] = embedding
-
-    return embeddings_dict
 
 #process the CSV file and generate embeddings dictionary
 def generate_embeddings_dict_from_csv_file(csv_filename):
