@@ -17,6 +17,10 @@ api_key = os.environ.get("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
 
 
+def greeting():
+    print("\n" + "~" * 20 + " Welcome to the AI TV Show Recommender " + "~" * 20 + "\n")
+
+
 def get_user_input():
     # Get user input for TV shows
     return input(
@@ -187,6 +191,7 @@ def generate_made_up_shows_and_ads(input_shows, recommended_real_tv_shows):
 def main():
     # Main function to run the TV show recommendation program
     while True:
+        greeting()
         user_input = get_user_input()
         # Check if the input is not empty
         if user_input:
